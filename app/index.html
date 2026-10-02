@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>IPTV Player</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <h1>📺 IPTV Player</h1>
+      <form id="source-form" class="source">
+        <select id="preset" aria-label="Playlist preset">
+          <option value="https://iptv-org.github.io/iptv/index.m3u">All channels</option>
+          <option value="https://iptv-org.github.io/iptv/categories/news.m3u">News</option>
+          <option value="https://iptv-org.github.io/iptv/categories/movies.m3u">Movies</option>
+          <option value="https://iptv-org.github.io/iptv/categories/sports.m3u">Sports</option>
+          <option value="https://iptv-org.github.io/iptv/categories/music.m3u">Music</option>
+          <option value="https://iptv-org.github.io/iptv/categories/kids.m3u">Kids</option>
+          <option value="https://iptv-org.github.io/iptv/languages/eng.m3u">English</option>
+          <option value="https://iptv-org.github.io/iptv/countries/us.m3u">United States</option>
+          <option value="https://iptv-org.github.io/iptv/countries/uk.m3u">United Kingdom</option>
+          <option value="custom">Custom URL…</option>
+        </select>
+        <input id="custom-url" type="url" placeholder="https://example.com/playlist.m3u" hidden />
+        <button type="submit">Load</button>
+        <label class="file-button">
+          Open file
+          <input
+            id="file-input"
+            type="file"
+            accept=".m3u,.m3u8,audio/x-mpegurl,application/x-mpegurl"
+            hidden
+          />
+        </label>
+      </form>
+    </header>
+
+    <main class="layout">
+      <aside class="sidebar">
+        <div class="filters">
+          <input id="search" type="search" placeholder="Search channels…" autocomplete="off" />
+          <select id="group-filter" aria-label="Category">
+            <option value="">All categories</option>
+          </select>
+          <label class="toggle"><input id="favorites-only" type="checkbox" /> Favorites only</label>
+        </div>
+        <p id="status" class="status">Choose a playlist to get started.</p>
+        <ul id="channel-list" class="channel-list"></ul>
+        <div id="sentinel"></div>
+      </aside>
+
+      <section class="player">
+        <video id="video" controls playsinline></video>
+        <div class="now-playing">
+          <img id="now-logo" alt="" hidden />
+          <div>
+            <h2 id="now-name">Nothing playing</h2>
+            <p id="now-meta"></p>
+          </div>
+        </div>
+        <p id="player-error" class="error" hidden></p>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js"></script>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
