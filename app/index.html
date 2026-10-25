@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="IPTV Plus – a free, open-source web IPTV player for M3U playlists and Xtream Codes with EPG, catch-up, multi-view and more." />
+    <meta name="theme-color" content="#0f1115" />
+    <title>IPTV Plus</title>
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <button id="menuBtn" class="icon-btn drawer-toggle" title="Groups" aria-label="Show groups">☰</button>
+      <div class="brand"><img src="icon.svg" alt="" width="28" height="28" /><span>IPTV&nbsp;Plus</span></div>
+      <div class="source-picker">
+        <select id="sourceSelect" aria-label="Playlist"></select>
+        <button id="refreshBtn" class="icon-btn" title="Reload playlist & EPG" aria-label="Reload playlist">↻</button>
+      </div>
+      <input id="searchInput" class="search" type="search" placeholder="Search…  ( / )" aria-label="Search" />
+      <nav class="actions">
+        <button id="guideBtn" title="TV guide (G)">📅 <span>Guide</span></button>
+        <button id="multiBtn" title="Multi-view (V)">▦ <span>Multi-view</span></button>
+        <button id="settingsBtn" title="Settings">⚙ <span>Settings</span></button>
+        <button id="helpBtn" class="icon-btn" title="Keyboard shortcuts (?)" aria-label="Help">?</button>
+      </nav>
+    </header>
+
+    <main class="layout">
+      <aside id="sidebar" class="sidebar">
+        <div id="typeTabs" class="tabs" role="tablist"></div>
+        <ul id="groupList" class="group-list"></ul>
+      </aside>
+      <div id="scrim" class="scrim"></div>
+
+      <section class="browser">
+        <div class="list-toolbar">
+          <div class="list-title"><strong id="listTitle">Channels</strong> <span id="listCount" class="muted"></span></div>
+          <select id="sortSelect" aria-label="Sort">
+            <option value="default">Playlist order</option>
+            <option value="name">Name A–Z</option>
+            <option value="name-desc">Name Z–A</option>
+            <option value="number">Channel number</option>
+          </select>
+          <button id="checkBtn" class="small" title="Check which streams are reachable">Check</button>
+        </div>
+        <ul id="channelList" class="channel-list"></ul>
+        <div id="emptyState" class="empty" hidden></div>
+      </section>
+
+      <section class="stage">
+        <div id="players" class="players single">
+          <div class="slot active" data-slot="0"><video playsinline></video><div class="osd"></div><div class="status"></div><div class="stats" hidden></div></div>
+          <div class="slot" data-slot="1"><video playsinline muted></video><div class="osd"></div><div class="status"></div><div class="stats" hidden></div></div>
+          <div class="slot" data-slot="2"><video playsinline muted></video><div class="osd"></div><div class="status"></div><div class="stats" hidden></div></div>
+          <div class="slot" data-slot="3"><video playsinline muted></video><div class="osd"></div><div class="status"></div><div class="stats" hidden></div></div>
+        </div>
+
+        <div id="seekRow" class="seek-row" hidden>
+          <span id="timeNow">0:00</span>
+          <input id="seekBar" type="range" min="0" max="1000" value="0" aria-label="Seek" />
+          <span id="timeTotal">0:00</span>
+        </div>
+
+        <div class="controls">
+          <button id="prevBtn" class="icon-btn" title="Previous channel (↑)" aria-label="Previous">⏮</button>
+          <button id="playBtn" class="icon-btn" title="Play / pause (Space)" aria-label="Play">▶</button>
+          <button id="nextBtn" class="icon-btn" title="Next channel (↓)" aria-label="Next">⏭</button>
+          <button id="lastBtn" class="icon-btn" title="Previous watched channel (L)" aria-label="Last channel">⟲</button>
+          <button id="muteBtn" class="icon-btn" title="Mute (M)" aria-label="Mute">🔊</button>
+          <input id="volume" type="range" min="0" max="1" step="0.05" aria-label="Volume" />
+          <span class="spacer"></span>
+          <select id="qualitySelect" title="Quality" aria-label="Quality" hidden></select>
+          <select id="audioSelect" title="Audio track" aria-label="Audio track" hidden></select>
+          <select id="subSelect" title="Subtitles" aria-label="Subtitles" hidden></select>
+          <select id="sleepSelect" title="Sleep timer" aria-label="Sleep timer">
+            <option value="0">⏾ Off</option>
+            <option value="15">⏾ 15 min</option>
+            <option value="30">⏾ 30 min</option>
+            <option value="60">⏾ 1 h</option>
+            <option value="90">⏾ 1.5 h</option>
+            <option value="120">⏾ 2 h</option>
+          </select>
+          <button id="snapBtn" class="icon-btn" title="Snapshot" aria-label="Snapshot">📷</button>
+          <button id="recBtn" class="icon-btn" title="Record (browser recording)" aria-label="Record">⏺</button>
+          <button id="infoBtn" class="icon-btn" title="Stream info (I)" aria-label="Stream info">ⓘ</button>
+          <button id="pipBtn" class="icon-btn" title="Picture-in-picture (P)" aria-label="Picture in picture">⧉</button>
+          <button id="fsBtn" class="icon-btn" title="Fullscreen (F)" aria-label="Fullscreen">⛶</button>
+        </div>
+
+        <div id="nowPanel" class="now-panel"></div>
+      </section>
+    </main>
+
+    <!-- Add / edit playlist -->
+    <dialog id="sourceDialog" class="dialog">
+      <form id="sourceForm" method="dialog">
+        <h2 id="sourceTitle">Add playlist</h2>
+        <div class="seg" id="sourceTabs">
+          <button type="button" data-type="m3u" class="on">M3U URL</button>
+          <button type="button" data-type="file">M3U file</button>
+          <button type="button" data-type="xtream">Xtream Codes</button>
+          <button type="button" data-type="iptvorg">Free channels</button>
+        </div>
+        <label>Name <input name="name" placeholder="My playlist" /></label>
+        <div data-for="m3u">
+          <label>Playlist URL <input name="url" type="url" placeholder="https://example.com/playlist.m3u" /></label>
+        </div>
+        <div data-for="file" hidden>
+          <label>Playlist file <input name="file" type="file" accept=".m3u,.m3u8,.txt,audio/x-mpegurl,application/vnd.apple.mpegurl" /></label>
+        </div>
+        <div data-for="xtream" hidden>
+          <label>Server URL <input name="server" placeholder="http://provider.com:8080" /></label>
+          <div class="row2">
+            <label>Username <input name="username" autocomplete="off" /></label>
+            <label>Password <input name="password" type="password" autocomplete="off" /></label>
+          </div>
+          <label>Live stream format
+            <select name="ext"><option value="m3u8">HLS (.m3u8)</option><option value="ts">MPEG-TS (.ts)</option></select>
+          </label>
+        </div>
+        <div data-for="iptvorg" hidden>
+          <p class="muted">Public channels from the <a href="https://github.com/iptv-org/iptv" target="_blank" rel="noopener">iptv-org</a> collection.</p>
+          <div class="row2">
+            <label>Browse by
+              <select name="orgKind">
+                <option value="all">All channels</option>
+                <option value="countries">Country</option>
+                <option value="categories">Category</option>
+                <option value="languages">Language</option>
+              </select>
+            </label>
+            <label>Choice <select name="orgValue" disabled><option>—</option></select></label>
+          </div>
+        </div>
+        <label data-hide-for="iptvorg">EPG / XMLTV URL <small class="muted">(optional, .xml or .xml.gz – comma separate several)</small>
+          <input name="epgUrl" placeholder="https://example.com/epg.xml.gz" />
+        </label>
+        <p id="sourceError" class="error" hidden></p>
+        <div class="dialog-actions">
+          <button value="cancel" formnovalidate>Cancel</button>
+          <button id="sourceSave" value="save" class="primary">Save & load</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Settings -->
+    <dialog id="settingsDialog" class="dialog wide">
+      <form method="dialog">
+        <h2>Settings</h2>
+        <section>
+          <h3>Playlists</h3>
+          <ul id="sourceManager" class="manager"></ul>
+          <button type="button" id="addSourceBtn">＋ Add playlist</button>
+        </section>
+        <section>
+          <h3>Appearance & playback</h3>
+          <div class="row2">
+            <label>Theme
+              <select data-setting="theme"><option value="dark">Dark</option><option value="light">Light</option><option value="system">System</option></select>
+            </label>
+            <label>Auto-reconnect attempts <input data-setting="retries" type="number" min="0" max="10" /></label>
+          </div>
+          <label class="check"><input data-setting="autoplayLast" type="checkbox" /> Resume last channel on start</label>
+          <label class="check"><input data-setting="hideDead" type="checkbox" /> Hide channels that failed the stream check</label>
+          <label>EPG time shift (hours) <input data-setting="epgOffset" type="number" step="0.5" min="-12" max="12" /></label>
+        </section>
+        <section>
+          <h3>Network</h3>
+          <label>CORS proxy <small class="muted">(e.g. <code>https://my-proxy.example/?url={url}</code> or a plain prefix)</small>
+            <input data-setting="proxy" placeholder="Leave empty to connect directly" />
+          </label>
+          <label class="check"><input data-setting="proxyStreams" type="checkbox" /> Also send video streams through the proxy</label>
+        </section>
+        <section>
+          <h3>Parental control</h3>
+          <p class="muted" id="pinState"></p>
+          <div class="row2">
+            <label>Locked group keywords <input data-setting="lockKeywords" placeholder="adult, xxx, 18+" /></label>
+            <label>New PIN <input id="newPin" type="password" inputmode="numeric" maxlength="8" placeholder="4–8 digits" /></label>
+          </div>
+          <div class="btn-row">
+            <button type="button" id="savePinBtn">Set / change PIN</button>
+            <button type="button" id="removePinBtn">Remove PIN</button>
+            <button type="button" id="lockBtn">Lock now</button>
+          </div>
+        </section>
+        <section>
+          <h3>Hidden groups</h3>
+          <ul id="hiddenGroups" class="chips"></ul>
+        </section>
+        <section>
+          <h3>Backup & data</h3>
+          <div class="btn-row">
+            <button type="button" id="exportBtn">Export backup</button>
+            <label class="button">Import backup <input id="importInput" type="file" accept="application/json,.json" hidden /></label>
+            <button type="button" id="exportFavBtn">Favorites → M3U</button>
+            <button type="button" id="exportViewBtn">Current list → M3U</button>
+            <button type="button" id="clearHistoryBtn">Clear history</button>
+            <button type="button" id="resetBtn" class="danger">Erase all data</button>
+          </div>
+        </section>
+        <div class="dialog-actions"><button value="close" class="primary">Done</button></div>
+      </form>
+    </dialog>
+
+    <!-- TV guide -->
+    <dialog id="guideDialog" class="dialog full">
+      <div class="guide-head">
+        <h2>TV guide</h2>
+        <div class="btn-row">
+          <button type="button" data-shift="-3">◀ 3h</button>
+          <button type="button" data-shift="0">Now</button>
+          <button type="button" data-shift="3">3h ▶</button>
+          <button type="button" id="guideClose" class="icon-btn" aria-label="Close">✕</button>
+        </div>
+      </div>
+      <div id="guideBody" class="guide-body"></div>
+      <div id="guideDetail" class="guide-detail" hidden></div>
+    </dialog>
+
+    <!-- Series episodes -->
+    <dialog id="seriesDialog" class="dialog wide">
+      <div class="guide-head"><h2 id="seriesTitle">Series</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></div>
+      <div id="seriesBody"></div>
+    </dialog>
+
+    <!-- PIN prompt -->
+    <dialog id="pinDialog" class="dialog narrow">
+      <form method="dialog">
+        <h2>Enter PIN</h2>
+        <p class="muted">This content is protected by parental control.</p>
+        <input id="pinInput" type="password" inputmode="numeric" maxlength="8" autocomplete="off" />
+        <p id="pinError" class="error" hidden>Wrong PIN</p>
+        <div class="dialog-actions">
+          <button value="cancel" formnovalidate>Cancel</button>
+          <button value="ok" class="primary">Unlock</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Help -->
+    <dialog id="helpDialog" class="dialog">
+      <form method="dialog">
+        <h2>Keyboard shortcuts</h2>
+        <table class="keys">
+          <tr><td><kbd>Space</kbd> / <kbd>K</kbd></td><td>Play / pause</td></tr>
+          <tr><td><kbd>↑</kbd> <kbd>↓</kbd></td><td>Previous / next channel</td></tr>
+          <tr><td><kbd>←</kbd> <kbd>→</kbd></td><td>Seek 10 s (movies, catch-up)</td></tr>
+          <tr><td><kbd>+</kbd> <kbd>-</kbd></td><td>Volume up / down</td></tr>
+          <tr><td><kbd>0</kbd>–<kbd>9</kbd></td><td>Jump to channel number</td></tr>
+          <tr><td><kbd>L</kbd></td><td>Last watched channel</td></tr>
+          <tr><td><kbd>F</kbd></td><td>Fullscreen</td></tr>
+          <tr><td><kbd>M</kbd></td><td>Mute</td></tr>
+          <tr><td><kbd>S</kbd></td><td>Add / remove favorite</td></tr>
+          <tr><td><kbd>G</kbd></td><td>TV guide</td></tr>
+          <tr><td><kbd>V</kbd></td><td>Toggle multi-view</td></tr>
+          <tr><td><kbd>I</kbd></td><td>Stream info</td></tr>
+          <tr><td><kbd>P</kbd></td><td>Picture-in-picture</td></tr>
+          <tr><td><kbd>/</kbd></td><td>Search</td></tr>
+        </table>
+        <div class="dialog-actions"><button value="close" class="primary">Close</button></div>
+      </form>
+    </dialog>
+
+    <div id="toasts" class="toasts" aria-live="polite"></div>
+
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>

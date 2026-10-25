@@ -1,0 +1,30 @@
+name: app
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - 'app/**'
+      - '.github/workflows/app.yml'
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: app-pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: app
+      - name: Deploy IPTV Plus to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

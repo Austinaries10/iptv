@@ -22,6 +22,8 @@ Simply paste the link to one of the playlists into [any video player](https://gi
 
 ![VLC Network Panel](https://github.com/iptv-org/iptv/raw/master/.readme/preview.png)
 
+Or use **[IPTV Plus](app/)**, the web player included in this repository. It plays M3U playlists and Xtream Codes accounts, with an EPG guide, catch-up, multi-view, favorites, parental control and more. See [app/README.md](app/README.md).
+
 ## Playlists
 
 The main playlist containing all channels available in the repository can be found at:
