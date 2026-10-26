@@ -9,6 +9,7 @@ import { Header } from '@/components/header';
 import { Spinner } from '@/components/states';
 import { LiveChannelList, type LiveChannelItem } from '@/components/live-channel-list';
 import { useLiveChannels } from '@/components/use-live-channels';
+import { useT } from '@/lib/i18n';
 
 // 播放器按需加载（与直播页同一拆包策略）
 const LivePlayer = dynamic(() => import('@/components/live-player').then((m) => m.LivePlayer), {
@@ -62,6 +63,7 @@ export default function MultiViewPage() {
 }
 
 function MultiContent() {
+  const t = useT();
   const { verified, channels, groups, isLoading } = useLiveChannels();
   const [layout, setLayout] = useState<2 | 4>(4);
   const [tiles, setTiles] = useState<(TileState | null)[]>([null, null, null, null]);
@@ -101,15 +103,15 @@ function MultiContent() {
   const currentUrl = tiles[active]?.url || '';
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col pb-tabbar">
       <Header />
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-4">
         <div className="flex flex-wrap items-center gap-2 mb-3">
           <Link href="/live" className="btn-ghost text-xs">
-            ← 直播
+            ← {t('直播', 'Live')}
           </Link>
-          <h1 className="text-base font-semibold text-content mr-2">多屏同看</h1>
-          <span className="text-xs text-faint hidden sm:inline">点画面标题栏选中（选中画面出声），再从右侧点选频道</span>
+          <h1 className="text-base font-semibold text-content mr-2">{t('多屏同看', 'Multi-view')}</h1>
+          <span className="text-xs text-faint hidden sm:inline">{t('点画面标题栏选中（选中画面出声），再从右侧点选频道', 'Select a tile (it gets the sound), then pick a channel')}</span>
           <span className="flex-1" />
           {([2, 4] as const).map((n) => (
             <button
@@ -120,16 +122,16 @@ function MultiContent() {
                 if (active >= n) setActive(0);
               }}
             >
-              {n} 画面
+              {t(`${n} 画面`, `${n} screens`)}
             </button>
           ))}
           <button className="btn-ghost text-xs" onClick={() => setTiles([null, null, null, null])}>
-            清空
+            {t('清空', 'Clear')}
           </button>
         </div>
 
         {!verified ? (
-          <p className="text-faint text-sm text-center py-10">等待访问验证...</p>
+          <p className="text-faint text-sm text-center py-10">{t('等待访问验证...', 'Waiting for sign-in...')}</p>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
             <div className={cn('grid gap-2', layout === 4 ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-2')}>
@@ -152,20 +154,20 @@ function MultiContent() {
                     onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setActive(i)}
                   >
                     <span aria-hidden>{i === active ? '🔊' : '🔇'}</span>
-                    <span className="truncate flex-1">{tile ? tile.name : `画面 ${i + 1}（空）`}</span>
+                    <span className="truncate flex-1">{tile ? tile.name : t(`画面 ${i + 1}（空）`, `Screen ${i + 1} (empty)`)}</span>
                     {tile && (
                       <>
                         <Link
                           href={liveHref(tile)}
                           className="opacity-80 hover:opacity-100"
-                          title="在直播页打开"
+                          title={t('在直播页打开', 'Open in Live TV')}
                           onClick={(e) => e.stopPropagation()}
                         >
                           ⤢
                         </Link>
                         <button
                           className="opacity-80 hover:opacity-100"
-                          aria-label="关闭画面"
+                          aria-label={t('关闭画面', 'Close screen')}
                           onClick={(e) => {
                             e.stopPropagation();
                             setTiles((prev) => prev.map((t, j) => (j === i ? null : t)));
@@ -184,7 +186,7 @@ function MultiContent() {
                         className="w-full h-full flex items-center justify-center text-white/50 text-sm"
                         onClick={() => setActive(i)}
                       >
-                        {i === active ? '从右侧选择频道' : '点击选中此画面'}
+                        {i === active ? t('从频道列表选择频道', 'Pick a channel from the list') : t('点击选中此画面', 'Tap to select this screen')}
                       </button>
                     )}
                   </div>

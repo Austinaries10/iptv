@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { DEFAULT_LOCK_KEYWORDS, hashPin, usePlusStore } from '@/lib/plus-store';
 import { cn } from '@/lib/utils';
 import { useToast } from './toast';
+import { useT } from '@/lib/i18n';
 
 /**
  * 家长锁：设置 4–8 位数字 PIN 后，分组名或台名命中关键字的频道在所有直播页面隐藏，
@@ -13,7 +14,8 @@ export function ParentalLockButton() {
   const pinHash = usePlusStore((s) => s.pinHash);
   const unlocked = usePlusStore((s) => s.unlocked);
   const [open, setOpen] = useState(false);
-  const label = !pinHash ? '🔓 家长锁' : unlocked ? '🔓 已解锁' : '🔒 已上锁';
+  const t = useT();
+  const label = !pinHash ? t('🔓 家长锁', '🔓 Parental lock') : unlocked ? t('🔓 已解锁', '🔓 Unlocked') : t('🔒 已上锁', '🔒 Locked');
   return (
     <>
       <button className={cn('btn-ghost text-xs', pinHash && !unlocked && 'text-warning')} onClick={() => setOpen(true)}>
@@ -31,6 +33,7 @@ function ParentalLockDialog({ onClose }: { onClose: () => void }) {
   const [keywords, setKeywords] = useState(lockKeywords);
   const [error, setError] = useState('');
   const { toast } = useToast();
+  const t = useT();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
@@ -42,33 +45,33 @@ function ParentalLockDialog({ onClose }: { onClose: () => void }) {
   const verify = async () => {
     if (!pinHash || unlocked) return true;
     if ((await hashPin(pin)) === pinHash) return true;
-    setError('PIN 不正确');
+    setError(t('PIN 不正确', 'Wrong PIN'));
     return false;
   };
 
   const unlock = async () => {
     if (!(await verify())) return;
     setUnlocked(true);
-    toast('已解锁，本次会话内显示受保护频道', 'success');
+    toast(t('已解锁，本次会话内显示受保护频道', 'Unlocked for this session'), 'success');
     onClose();
   };
 
   const savePin = async () => {
     if (!/^\d{4,8}$/.test(newPin)) {
-      setError('新 PIN 需为 4–8 位数字');
+      setError(t('新 PIN 需为 4–8 位数字', 'The new PIN must be 4–8 digits'));
       return;
     }
     if (!(await verify())) return;
     setPinHash(await hashPin(newPin));
     setLockKeywords(keywords.trim() || DEFAULT_LOCK_KEYWORDS);
-    toast(pinHash ? 'PIN 已修改' : '家长锁已开启', 'success');
+    toast(pinHash ? t('PIN 已修改', 'PIN changed') : t('家长锁已开启', 'Parental lock is on'), 'success');
     onClose();
   };
 
   const removePin = async () => {
     if (!(await verify())) return;
     setPinHash('');
-    toast('家长锁已关闭');
+    toast(t('家长锁已关闭', 'Parental lock is off'));
     onClose();
   };
 
@@ -77,14 +80,14 @@ function ParentalLockDialog({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 animate-fade-in" onClick={onClose} aria-hidden />
-      <div role="dialog" aria-modal="true" aria-label="家长锁" className="relative bg-surface-raised rounded-xl w-full max-w-sm shadow-2xl p-5 animate-slide-up space-y-3">
-        <h2 className="text-base font-semibold text-content">家长锁</h2>
+      <div role="dialog" aria-modal="true" aria-label={t('家长锁', 'Parental lock')} className="relative bg-surface-raised rounded-xl w-full max-w-sm shadow-2xl p-5 animate-slide-up space-y-3">
+        <h2 className="text-base font-semibold text-content">{t('家长锁', 'Parental lock')}</h2>
         <p className="text-xs text-muted leading-relaxed">
           {pinHash
             ? locked
-              ? '已上锁：命中关键字的频道已隐藏。输入 PIN 解锁（刷新页面后自动重新上锁）。'
-              : '本次会话已解锁。'
-            : '设置 PIN 后，分组名或台名包含下列关键字的频道将被隐藏，需输入 PIN 才能观看。'}
+              ? t('已上锁：命中关键字的频道已隐藏。输入 PIN 解锁（刷新页面后自动重新上锁）。', 'Locked: matching channels are hidden. Enter the PIN to unlock (it locks again when the page reloads).')
+              : t('本次会话已解锁。', 'Unlocked for this session.')
+            : t('设置 PIN 后，分组名或台名包含下列关键字的频道将被隐藏，需输入 PIN 才能观看。', 'With a PIN set, channels whose group or name contains these keywords are hidden until the PIN is entered.')}
         </p>
         {locked && (
           <input
@@ -93,7 +96,7 @@ function ParentalLockDialog({ onClose }: { onClose: () => void }) {
             inputMode="numeric"
             autoFocus
             maxLength={8}
-            placeholder="当前 PIN"
+            placeholder={t('当前 PIN', 'Current PIN')}
             value={pin}
             onChange={(e) => {
               setPin(e.target.value);
@@ -103,11 +106,11 @@ function ParentalLockDialog({ onClose }: { onClose: () => void }) {
           />
         )}
         <label className="block text-xs text-muted space-y-1">
-          <span>受保护关键字（逗号分隔）</span>
+          <span>{t('受保护关键字（逗号分隔）', 'Locked keywords (comma separated)')}</span>
           <input className="input w-full" value={keywords} onChange={(e) => setKeywords(e.target.value)} />
         </label>
         <label className="block text-xs text-muted space-y-1">
-          <span>{pinHash ? '新 PIN（修改时填写）' : '设置 PIN（4–8 位数字）'}</span>
+          <span>{pinHash ? t('新 PIN（修改时填写）', 'New PIN (to change it)') : t('设置 PIN（4–8 位数字）', 'Set a PIN (4–8 digits)')}</span>
           <input
             className="input w-full"
             type="password"
@@ -124,7 +127,7 @@ function ParentalLockDialog({ onClose }: { onClose: () => void }) {
         <div className="flex flex-wrap gap-2 justify-end pt-1">
           {pinHash && (
             <button className="btn-ghost text-xs text-danger" onClick={() => void removePin()}>
-              关闭家长锁
+              {t('关闭家长锁', 'Turn off')}
             </button>
           )}
           {pinHash && !locked && (
@@ -132,16 +135,16 @@ function ParentalLockDialog({ onClose }: { onClose: () => void }) {
               className="btn-ghost text-xs"
               onClick={() => {
                 setUnlocked(false);
-                toast('已重新上锁');
+                toast(t('已重新上锁', 'Locked again'));
                 onClose();
               }}
             >
-              立即上锁
+              {t('立即上锁', 'Lock now')}
             </button>
           )}
           {locked && (
             <button className="btn-ghost text-xs" onClick={() => void unlock()}>
-              解锁
+              {t('解锁', 'Unlock')}
             </button>
           )}
           {!locked && keywords !== lockKeywords && !newPin && pinHash && (
@@ -149,14 +152,14 @@ function ParentalLockDialog({ onClose }: { onClose: () => void }) {
               className="btn-ghost text-xs"
               onClick={() => {
                 setLockKeywords(keywords.trim() || DEFAULT_LOCK_KEYWORDS);
-                toast('关键字已保存', 'success');
+                toast(t('关键字已保存', 'Keywords saved'), 'success');
               }}
             >
-              保存关键字
+              {t('保存关键字', 'Save keywords')}
             </button>
           )}
           <button className="btn-primary text-xs" disabled={!newPin} onClick={() => void savePin()}>
-            {pinHash ? '修改 PIN' : '开启家长锁'}
+            {pinHash ? t('修改 PIN', 'Change PIN') : t('开启家长锁', 'Turn on')}
           </button>
         </div>
       </div>

@@ -22,7 +22,7 @@ export default function GlobalError({
           alignItems: 'center',
           justifyContent: 'center',
           gap: 12,
-          background: '#0b101a',
+          background: '#141414',
           color: '#c9d1d9',
           fontFamily: 'system-ui, sans-serif',
           textAlign: 'center',

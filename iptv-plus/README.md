@@ -2,7 +2,15 @@
 
 IPTV Plus is a self-hosted live TV / IPTV and video player built on [LibreTV](https://github.com/LibreSpark/LibreTV) (Next.js 15, TypeScript, Tailwind, ArtPlayer and hls.js). It keeps everything LibreTV does, including multi-source video search, M3U live TV with an EPG, a server-side stream proxy and a PWA, and adds the features below.
 
-> The interface is in Chinese, the same as upstream LibreTV.
+## Design
+
+- **Netflix-style interface:** a home page with two big entries (**电影剧集 Movies & Shows** and **直播 Live TV**), a large banner and swipeable poster rows, "Continue watching" and recent channels.
+- **中文 / English:** switch in Settings → Preferences → Language & look, or with the 中/EN button in the top bar.
+- **Dark / light / system theme:** switch in the same place.
+- **Phones:** a bottom tab bar (Home, Movies & Shows, Live TV, Me).
+- **TV:** use the remote's arrow keys and OK to move between cards on Home and Movies & Shows. On Live TV, up and down change the channel.
+
+The main screens are fully bilingual. Some deeper settings panels and the movie player are still partly Chinese.
 
 ## What IPTV Plus adds
 

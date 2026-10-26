@@ -5,6 +5,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { ToastProvider } from './toast';
 import { AuthProvider } from './auth';
 import { ThemeProvider } from './theme';
+import { LangProvider } from '@/lib/i18n';
 import { GlobalDownloadManager } from './download-manager';
 import { useAppStore, hydrateLiveProbeResults } from '@/lib/store';
 import { usePlusStore } from '@/lib/plus-store';
@@ -49,14 +50,16 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <ToastProvider>
-          {/* 全站常驻：下载事件监听（enqueueDownload）依赖它存在——
-              挂在 Header 里会让 /watch 等不渲染 Header 的页面派发的事件凭空丢失 */}
-          <GlobalDownloadManager />
-          {/* 节目预约提醒：全站常驻，任何页面到点都会提示 */}
-          <LiveReminderWatcher />
-          <AuthProvider>{children}</AuthProvider>
-        </ToastProvider>
+        <LangProvider>
+          <ToastProvider>
+            {/* 全站常驻：下载事件监听（enqueueDownload）依赖它存在——
+                挂在 Header 里会让 /watch 等不渲染 Header 的页面派发的事件凭空丢失 */}
+            <GlobalDownloadManager />
+            {/* 节目预约提醒：全站常驻，任何页面到点都会提示 */}
+            <LiveReminderWatcher />
+            <AuthProvider>{children}</AuthProvider>
+          </ToastProvider>
+        </LangProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

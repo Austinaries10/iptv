@@ -530,7 +530,7 @@ export function PlayerShell({
       playsInline: true,
       airplay: true,
       hotkey: false,
-      theme: '#2563eb',
+      theme: '#e50914',
       lang: navigator.language.toLowerCase().startsWith('zh') ? 'zh-cn' : 'en',
       moreVideoAttr: { crossOrigin: 'anonymous', playsInline: true },
       // 上/下集放在播放键右侧：换集是看剧最高频的动作，不该让用户滚回页面下方找按钮

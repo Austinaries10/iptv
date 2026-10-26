@@ -1,5 +1,6 @@
 'use client';
 
+import { useT } from '@/lib/i18n';
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { addSearchHistory, clearSearchHistory, db, removeSearchHistory, restoreSearchHistory } from '@/lib/db';
@@ -16,6 +17,7 @@ const HISTORY_LIMIT = 10;
  */
 export function useSearchHistory(input: string) {
   const { toast } = useToast();
+  const t = useT();
   const [open, setOpen] = useState(false);
   /** 键盘高亮项下标，-1 表示未选中 */
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -69,9 +71,9 @@ export function useSearchHistory(input: string) {
     await clearSearchHistory();
     await history.refetch();
     // 轻量破坏性操作：给一次撤销机会，不打断式弹确认
-    toast('已清空搜索记录', 'info', {
+    toast(t('已清空搜索记录', 'Search history cleared'), 'info', {
       action: {
-        label: '撤销',
+        label: t('撤销', 'Undo'),
         onClick: () => {
           restoreSearchHistory(snapshot).then(() => history.refetch());
         },
@@ -143,6 +145,7 @@ export function SearchHistoryDropdown({
   onRemove: (text: string) => void;
   onClearAll: () => void;
 }) {
+  const t = useT();
   return (
     <div
       className={cn(
@@ -153,20 +156,20 @@ export function SearchHistoryDropdown({
       <div className="flex items-center justify-between pl-4 pr-2 py-2 border-b border-line">
         <span className="flex items-center gap-1.5 text-xs text-faint">
           <Icon name="clock" className="w-3.5 h-3.5" />
-          最近搜索
+          {t('最近搜索', 'Recent searches')}
         </span>
         <button
           type="button"
           className="px-2 py-1 rounded-md text-xs text-faint hover:text-danger hover:bg-hover transition-colors"
           onClick={onClearAll}
         >
-          清空
+          {t('清空', 'Clear')}
         </button>
       </div>
       <ul
         id={id}
         role="listbox"
-        aria-label="最近搜索"
+        aria-label={t('最近搜索', 'Recent searches')}
         className="max-h-[min(70vh,400px)] overflow-y-auto scrollbar-thin py-1"
       >
         {matches.map((h, i) => (
@@ -187,7 +190,7 @@ export function SearchHistoryDropdown({
             <button
               type="button"
               className="shrink-0 p-1.5 mr-2 rounded-md text-faint hover:text-danger hover:bg-chip transition-colors"
-              aria-label={`删除搜索记录 ${h.text}`}
+              aria-label={t(`删除搜索记录 ${h.text}`, `Remove ${h.text}`)}
               onClick={() => onRemove(h.text)}
             >
               <Icon name="close" className="w-3.5 h-3.5" />

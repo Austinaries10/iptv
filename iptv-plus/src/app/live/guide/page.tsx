@@ -15,6 +15,7 @@ import { Header } from '@/components/header';
 import { Dropdown } from '@/components/dropdown';
 import { EmptyState, Spinner } from '@/components/states';
 import { useToast } from '@/components/toast';
+import { useT } from '@/lib/i18n';
 import { fmtTime } from '@/components/live-epg-panel';
 import { useLiveChannels } from '@/components/use-live-channels';
 import type { LiveChannelItem } from '@/components/live-channel-list';
@@ -49,6 +50,7 @@ interface Selected {
 function GuideContent() {
   const router = useRouter();
   const { toast } = useToast();
+  const t = useT();
   const { verified, channels, groups, isLoading } = useLiveChannels();
   const liveFavorites = useAppStore((s) => s.liveFavorites);
   const reminders = usePlusStore((s) => s.reminders);
@@ -117,8 +119,8 @@ function GuideContent() {
   }, [shift, programsQuery.dataUpdatedAt]);
 
   const groupOptions = [
-    { value: ALL, label: '全部分组' },
-    { value: FAV, label: '★ 收藏' },
+    { value: ALL, label: t('全部分组', 'All groups') },
+    { value: FAV, label: t('★ 收藏', '★ Favorites') },
     ...groups.map((g) => ({ value: g, label: g })),
   ];
 
@@ -142,42 +144,47 @@ function GuideContent() {
       if (added && 'Notification' in window && Notification.permission === 'default') {
         void Notification.requestPermission().catch(() => {});
       }
-      toast(added ? `已预约：${fmtTime(program.start)}「${program.title}」` : '已取消预约', added ? 'success' : 'info');
+      toast(
+        added
+          ? t(`已预约：${fmtTime(program.start)}「${program.title}」`, `Reminder set: ${fmtTime(program.start)} "${program.title}"`)
+          : t('已取消预约', 'Reminder removed'),
+        added ? 'success' : 'info'
+      );
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col pb-tabbar">
       <Header />
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-4 flex flex-col min-h-0">
         <div className="flex flex-wrap items-center gap-2 mb-3">
           <Link href="/live" className="btn-ghost text-xs">
-            ← 直播
+            ← {t('直播', 'Live')}
           </Link>
-          <h1 className="text-base font-semibold text-content mr-2">节目表</h1>
-          <Dropdown ariaLabel="分组" value={group} onChange={setGroup} options={groupOptions} className="text-xs min-w-[8rem]" />
+          <h1 className="text-base font-semibold text-content mr-2">{t('节目表', 'TV guide')}</h1>
+          <Dropdown ariaLabel={t('分组', 'Group')} value={group} onChange={setGroup} options={groupOptions} className="text-xs min-w-[8rem]" />
           <span className="flex-1" />
           <button className="btn-ghost text-xs" onClick={() => setShift((s) => s - 1)}>
-            ◀ 3 小时
+            ◀ {t('3 小时', '3 h')}
           </button>
           <button className="btn-ghost text-xs" onClick={() => setShift(0)}>
-            现在
+            {t('现在', 'Now')}
           </button>
           <button className="btn-ghost text-xs" onClick={() => setShift((s) => s + 1)}>
-            3 小时 ▶
+            {t('3 小时', '3 h')} ▶
           </button>
         </div>
 
         {!verified ? (
-          <p className="text-faint text-sm text-center py-10">等待访问验证...</p>
+          <p className="text-faint text-sm text-center py-10">{t('等待访问验证...', 'Waiting for sign-in...')}</p>
         ) : isLoading ? (
           <div className="flex justify-center py-16">
             <Spinner size="lg" />
           </div>
         ) : filtered.length === 0 ? (
           <EmptyState
-            title="没有可显示节目单的频道"
-            description="节目表需要直播源提供 EPG 地址（在设置 → 直播源中填写，或使用带 x-tvg-url 的 M3U / Xtream 账号）"
+            title={t('没有可显示节目单的频道', 'No channels with a programme guide')}
+            description={t('节目表需要直播源提供 EPG 地址（在设置 → 直播源中填写，或使用带 x-tvg-url 的 M3U / Xtream 账号）', 'The guide needs an EPG URL from your live source (set it in Settings → Live sources, or use an M3U with x-tvg-url or an Xtream account)')}
           />
         ) : (
           <div className="relative border border-line rounded-lg bg-surface-raised overflow-hidden flex flex-col min-h-0 max-h-[calc(100vh-10rem)]">
@@ -209,7 +216,7 @@ function GuideContent() {
                       <div className="relative shrink-0" style={{ width }}>
                         {programsQuery.isLoading ? null : progs.length === 0 ? (
                           <span className="absolute top-4 text-[11px] text-faint" style={{ left: Math.max(8, nowX - 100) }}>
-                            暂无节目信息
+                            {t('暂无节目信息', 'No information')}
                           </span>
                         ) : (
                           progs.map((p) => {
@@ -257,7 +264,7 @@ function GuideContent() {
             </div>
             {filtered.length > visible.length && (
               <button className="btn-ghost text-xs m-2 self-center" onClick={() => setLimit((n) => n + PAGE_SIZE)}>
-                显示更多频道（{visible.length}/{filtered.length}）
+                {t('显示更多频道', 'Show more channels')}（{visible.length}/{filtered.length}）
               </button>
             )}
             {selected && (
@@ -273,23 +280,23 @@ function GuideContent() {
                 <div className="flex flex-wrap gap-2">
                   {selected.program.start <= now && selected.program.stop > now && (
                     <button className="btn-primary text-xs" onClick={() => act('live')}>
-                      ▶ 观看直播
+                      ▶ {t('观看直播', 'Watch live')}
                     </button>
                   )}
                   {selected.program.start <= now && canCatchupProgram(selected.channel.catchup, selected.program, now) && (
                     <button className="btn-ghost text-xs" onClick={() => act('catchup')}>
-                      ⟲ {selected.program.stop <= now ? '回看' : '从头看'}
+                      ⟲ {selected.program.stop <= now ? t('回看', 'Watch') : t('从头看', 'Start over')}
                     </button>
                   )}
                   {selected.program.start > now && (
                     <button className="btn-ghost text-xs" onClick={() => act('remind')}>
                       {reminders.some((r) => r.channelUrl === selected.channel.url && r.start === selected.program.start)
-                        ? '🔔 取消预约'
-                        : '🔕 预约提醒'}
+                        ? t('🔔 取消预约', '🔔 Remove reminder')
+                        : t('🔕 预约提醒', '🔕 Remind me')}
                     </button>
                   )}
                   <button className="btn-ghost text-xs" onClick={() => setSelected(null)}>
-                    关闭
+                    {t('关闭', 'Close')}
                   </button>
                 </div>
               </div>

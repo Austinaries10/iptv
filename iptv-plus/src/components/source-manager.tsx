@@ -28,6 +28,8 @@ import { exportConfig, importConfig } from '@/lib/db';
 import { PERSIST_KEY } from '@/lib/persist-storage';
 import { copyToClipboard } from '@/lib/clipboard';
 import { useAuth } from './auth';
+import { AppearancePanel } from './appearance-panel';
+import { useT } from '@/lib/i18n';
 import { api } from '@/lib/client-api';
 import { AUTO_REFRESH_MAX_FAIL_STREAK, syncSourceSubscription } from '@/lib/subscription-sync';
 import { describeParseStats } from '@/lib/tvbox-parser';
@@ -40,31 +42,42 @@ import { describeParseStats } from '@/lib/tvbox-parser';
  */
 
 type PrimaryTab = 'sources' | 'prefs' | 'data';
-type SecondaryTab = 'vod' | 'live' | 'subs' | 'playback' | 'image' | 'home' | 'io';
+type SecondaryTab = 'vod' | 'live' | 'subs' | 'display' | 'playback' | 'image' | 'home' | 'io';
 
-const PRIMARY_TABS: { id: PrimaryTab; label: string; icon: IconName }[] = [
-  { id: 'sources', label: '源管理', icon: 'link' },
-  { id: 'prefs', label: '偏好设置', icon: 'gear' },
-  { id: 'data', label: '数据', icon: 'download' },
+const PRIMARY_TABS: { id: PrimaryTab; label: string; en: string; icon: IconName }[] = [
+  { id: 'sources', label: '源管理', en: 'Sources', icon: 'link' },
+  { id: 'prefs', label: '偏好设置', en: 'Preferences', icon: 'gear' },
+  { id: 'data', label: '数据', en: 'Data', icon: 'download' },
 ];
 
-const SECONDARY_TABS: Record<PrimaryTab, { id: SecondaryTab; label: string }[]> = {
+const SECONDARY_TABS: Record<PrimaryTab, { id: SecondaryTab; label: string; en: string }[]> = {
   sources: [
-    { id: 'vod', label: '点播源' },
-    { id: 'live', label: '直播源' },
-    { id: 'subs', label: '数据源订阅' },
+    { id: 'vod', label: '点播源', en: 'Video sources' },
+    { id: 'live', label: '直播源', en: 'Live sources' },
+    { id: 'subs', label: '数据源订阅', en: 'Subscriptions' },
   ],
   prefs: [
-    { id: 'playback', label: '播放与过滤' },
-    { id: 'image', label: '封面图加载' },
-    { id: 'home', label: '首页与内容' },
+    { id: 'display', label: '语言与外观', en: 'Language & look' },
+    { id: 'playback', label: '播放与过滤', en: 'Playback' },
+    { id: 'image', label: '封面图加载', en: 'Images' },
+    { id: 'home', label: '首页与内容', en: 'Home & content' },
   ],
-  data: [{ id: 'io', label: '配置导入导出' }],
+  data: [{ id: 'io', label: '配置导入导出', en: 'Import / export' }],
 };
 
 const TAB_STORAGE_KEY = 'libretv-settings-tab';
 
-export function SourceManagerDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function SourceManagerDrawer({
+  open,
+  onClose,
+  initialTab,
+}: {
+  open: boolean;
+  onClose: () => void;
+  /** 打开时直接定位到某个面板（如底部导航「我的」直达语言与外观） */
+  initialTab?: SecondaryTab;
+}) {
+  const t = useT();
   const [primary, setPrimary] = useState<PrimaryTab>('sources');
   const [secondary, setSecondary] = useState<Record<PrimaryTab, SecondaryTab>>({
     sources: 'vod',
@@ -107,21 +120,30 @@ export function SourceManagerDrawer({ open, onClose }: { open: boolean; onClose:
     }
   }, [primary, secondary]);
 
+  useEffect(() => {
+    if (!open || !initialTab) return;
+    const owner = (Object.keys(SECONDARY_TABS) as PrimaryTab[]).find((k) => SECONDARY_TABS[k].some((x) => x.id === initialTab));
+    if (!owner) return;
+    setPrimary(owner);
+    setSecondary((prev) => ({ ...prev, [owner]: initialTab }));
+  }, [open, initialTab]);
+
   const current = secondary[primary];
+  const tr = <T extends { label: string; en: string }>(tabs: T[]) => tabs.map((x) => ({ ...x, label: t(x.label, x.en) }));
 
   return (
     <Drawer
       open={open}
       onClose={onClose}
-      title="设置"
+      title={t('设置', 'Settings')}
       resetScrollKey={current}
       subheader={
         <div className="space-y-2">
-          <TabRow tabs={PRIMARY_TABS} value={primary} onChange={setPrimary} variant="primary" ariaLabel="设置分类" />
+          <TabRow tabs={tr(PRIMARY_TABS)} value={primary} onChange={setPrimary} variant="primary" ariaLabel={t('设置分类', 'Settings category')} />
           {/* 分组下只有一项时无需二级导航，直接展示该面板 */}
           {SECONDARY_TABS[primary].length > 1 && (
             <TabRow
-              tabs={SECONDARY_TABS[primary]}
+              tabs={tr(SECONDARY_TABS[primary])}
               value={current}
               onChange={(id) => setSecondary((prev) => ({ ...prev, [primary]: id }))}
               variant="secondary"
@@ -131,6 +153,7 @@ export function SourceManagerDrawer({ open, onClose }: { open: boolean; onClose:
         </div>
       }
     >
+      {current === 'display' && <AppearancePanel />}
       {current === 'vod' && <VodSourcesPanel />}
       {current === 'live' && <LiveSourceManager />}
       {current === 'playback' && <PlaybackPanel />}

@@ -26,6 +26,7 @@ import { useLiveChannels } from '@/components/use-live-channels';
 import { ParentalLockButton } from '@/components/parental-lock';
 import { SleepTimerButton } from '@/components/sleep-timer';
 import { useToast } from '@/components/toast';
+import { useT } from '@/lib/i18n';
 import { cn, maskCredentials } from '@/lib/utils';
 import { SmartImage } from '@/components/smart-image';
 
@@ -47,6 +48,7 @@ function LiveContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
+  const t = useT();
   // 精确订阅所需字段：任何其他 store 变化（如测活写回）不应触发本组件重渲染
   const liveFavorites = useAppStore((s) => s.liveFavorites);
   const imageProxyMode = useAppStore((s) => s.imageProxyMode);
@@ -78,12 +80,12 @@ function LiveContent() {
     return {
       id: searchParams.get('tvgId') || currentUrl,
       url: currentUrl,
-      name: searchParams.get('name') || '未知频道',
+      name: searchParams.get('name') || t('未知频道', 'Unknown channel'),
       group: searchParams.get('group') || undefined,
       tvgId: searchParams.get('tvgId') || undefined,
       epg: searchParams.get('epg') || undefined,
     } as LiveChannelItem;
-  }, [channels, currentUrl, searchParams]);
+  }, [channels, currentUrl, searchParams, t]);
 
   useEffect(() => {
     setLogoFailed(false);
@@ -96,13 +98,13 @@ function LiveContent() {
       if (!ch) return;
       const url = buildCatchupUrl(ch.url, ch.catchup, program.start, program.stop);
       if (!url) {
-        toast('该频道无法生成回看地址', 'error');
+        toast(t('该频道无法生成回看地址', 'Catch-up is not available for this channel'), 'error');
         return;
       }
       setSleeping(false);
       setCatchup({ url, program });
     },
-    [toast]
+    [toast, t]
   );
   useEffect(() => {
     currentChannelRef.current = currentChannel;
@@ -191,8 +193,8 @@ function LiveContent() {
     const key = `${currentChannel.url}|${cs}`;
     if (deepCatchupRef.current === key) return;
     deepCatchupRef.current = key;
-    playCatchup({ channelId: currentChannel.tvgId || currentChannel.id, start: cs, stop: ce, title: searchParams.get('ct') || '回看' });
-  }, [searchParams, currentChannel, playCatchup]);
+    playCatchup({ channelId: currentChannel.tvgId || currentChannel.id, start: cs, stop: ce, title: searchParams.get('ct') || t('回看', 'Catch-up') });
+  }, [searchParams, currentChannel, playCatchup, t]);
 
   // 数字键换台：停止输入 1.2s 后按频道号（tvg-chno）匹配，找不到时按当前列表序号
   useEffect(() => {
@@ -201,11 +203,11 @@ function LiveContent() {
       const list = filteredRef.current;
       const target = list.find((c) => c.chno === zapDigits) ?? list[Number(zapDigits) - 1];
       if (target) selectChannel(target);
-      else toast(`没有 ${zapDigits} 号频道`, 'warning');
+      else toast(t(`没有 ${zapDigits} 号频道`, `No channel ${zapDigits}`), 'warning');
       setZapDigits('');
     }, 1200);
     return () => clearTimeout(timer);
-  }, [zapDigits, selectChannel, toast]);
+  }, [zapDigits, selectChannel, toast, t]);
 
   const handleSelect = useCallback(
     (c: LiveChannelItem) => {
@@ -221,7 +223,7 @@ function LiveContent() {
       <div className="min-h-screen flex flex-col">
         <Header />
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-faint text-sm">等待访问验证...</p>
+          <p className="text-faint text-sm">{t('等待访问验证...', 'Waiting for sign-in...')}</p>
         </div>
       </div>
     );
@@ -231,7 +233,7 @@ function LiveContent() {
   const isFavorite = currentChannel ? liveFavorites.includes(currentChannel.url) : false;
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col pb-tabbar">
       <Header showSearch />
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-4">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
@@ -239,10 +241,10 @@ function LiveContent() {
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2 mb-3">
               <Link href="/live/guide" className="btn-ghost text-xs">
-                📅 节目表
+                📅 {t('节目表', 'TV guide')}
               </Link>
               <Link href="/live/multi" className="btn-ghost text-xs">
-                ▦ 多屏同看
+                ▦ {t('多屏同看', 'Multi-view')}
               </Link>
               <span className="flex-1" />
               <SleepTimerButton onFire={() => setSleeping(true)} />
@@ -251,16 +253,16 @@ function LiveContent() {
             <div className="aspect-video bg-black rounded-lg overflow-hidden">
               {currentUrl && sleeping ? (
                 <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-black">
-                  <p className="text-white/70 text-sm">🌙 睡眠定时已到，播放已停止</p>
+                  <p className="text-white/70 text-sm">🌙 {t('睡眠定时已到，播放已停止', 'Sleep timer ended — playback stopped')}</p>
                   <button className="btn-ghost text-xs !bg-white/10 !text-white !border-white/20" onClick={() => setSleeping(false)}>
-                    继续观看
+                    {t('继续观看', 'Keep watching')}
                   </button>
                 </div>
               ) : currentUrl ? (
                 <div className="relative w-full h-full">
                   <LivePlayer
                     url={catchup?.url || currentUrl}
-                    title={catchup ? `${currentChannel?.name || ''} · ${catchup.program.title}` : currentChannel?.name || '直播'}
+                    title={catchup ? `${currentChannel?.name || ''} · ${catchup.program.title}` : currentChannel?.name || t('直播', 'Live')}
                     onPrevChannel={goPrevChannel}
                     onNextChannel={goNextChannel}
                     seekable={Boolean(catchup)}
@@ -277,11 +279,11 @@ function LiveContent() {
                   <p className="text-white/60 text-sm">
                     {sources.length === 0
                       ? hasAnySource
-                        ? '所有直播源均已停用，请在设置中勾选启用'
-                        : '请先在设置中添加直播源（M3U 订阅 / Xtream 账号 / 免费频道）'
+                        ? t('所有直播源均已停用，请在设置中勾选启用', 'All live sources are disabled — enable one in Settings')
+                        : t('请先在设置中添加直播源（M3U 订阅 / Xtream 账号 / 免费频道）', 'Add a live source in Settings first (M3U, Xtream account or free channels)')
                       : isLoading
-                        ? '频道列表加载中...'
-                        : '从右侧选择一个频道开始观看'}
+                        ? t('频道列表加载中...', 'Loading channels...')
+                        : t('从频道列表选择一个频道开始观看', 'Pick a channel to start watching')}
                   </p>
                 </div>
               )}
@@ -289,19 +291,19 @@ function LiveContent() {
 
             {catchup && (
               <div className="mt-3 flex items-center gap-2 rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-xs text-content">
-                <span className="shrink-0">⟲ 回看中</span>
+                <span className="shrink-0">⟲ {t('回看中', 'Catch-up')}</span>
                 <span className="truncate flex-1">
                   {fmtTime(catchup.program.start)}–{fmtTime(catchup.program.stop)} {catchup.program.title}
                 </span>
                 <button className="btn-ghost text-xs shrink-0" onClick={() => setCatchup(null)}>
-                  返回直播
+                  {t('返回直播', 'Back to live')}
                 </button>
               </div>
             )}
 
             {/* 频道信息条 */}
             {currentChannel && (
-              <div className="bg-surface-raised border border-line rounded-lg p-3 mt-3 flex items-center gap-3">
+              <div className="bg-surface-raised border border-line rounded-lg p-3 mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
                 <div className="w-10 h-10 shrink-0 rounded bg-chip flex items-center justify-center overflow-hidden">
                   {logo && !logoFailed ? (
                     <SmartImage
@@ -316,7 +318,7 @@ function LiveContent() {
                     <span className="text-xs text-faint">{currentChannel.name.slice(0, 1)}</span>
                   )}
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-[55%]">
                   <div className="flex items-center gap-2">
                     <span className="live-dot shrink-0" />
                     <h1 className="text-sm font-semibold text-content truncate">{currentChannel.name}</h1>
@@ -326,7 +328,7 @@ function LiveContent() {
                   </div>
                   <p className="text-xs text-faint truncate mt-0.5">{maskCredentials(currentChannel.url)}</p>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="flex items-center gap-1 shrink-0 ml-auto">
                   <button
                     className={cn(
                       'rounded-md p-2 transition-colors',
@@ -334,8 +336,8 @@ function LiveContent() {
                         ? 'text-muted hover:text-accent hover:bg-hover'
                         : 'text-faint/40 cursor-default'
                     )}
-                    aria-label="上一个频道"
-                    title={lastChannelRef.current ? `上一个频道：${lastChannelRef.current.name}（Backspace）` : '暂无上一个频道'}
+                    aria-label={t('上一个频道', 'Previous channel')}
+                    title={lastChannelRef.current ? t(`上一个频道：${lastChannelRef.current.name}（Backspace）`, `Previous: ${lastChannelRef.current.name} (Backspace)`) : t('暂无上一个频道', 'No previous channel')}
                     onClick={backToPrevChannel}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -349,8 +351,8 @@ function LiveContent() {
                   </button>
                   <button
                     className="rounded-md p-2 text-muted hover:text-accent hover:bg-hover transition-colors"
-                    aria-label="上一台"
-                    title="上一台（↑）"
+                    aria-label={t('上一台', 'Channel up')}
+                    title={t('上一台（↑）', 'Channel up (↑)')}
                     onClick={goPrevChannel}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -364,8 +366,8 @@ function LiveContent() {
                   </button>
                   <button
                     className="rounded-md p-2 text-muted hover:text-accent hover:bg-hover transition-colors"
-                    aria-label="下一台"
-                    title="下一台（↓）"
+                    aria-label={t('下一台', 'Channel down')}
+                    title={t('下一台（↓）', 'Channel down (↓)')}
                     onClick={goNextChannel}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -382,8 +384,8 @@ function LiveContent() {
                       'rounded-md p-2 transition-colors',
                       isFavorite ? 'text-warning' : 'text-muted hover:text-warning hover:bg-hover'
                     )}
-                    aria-label={isFavorite ? '取消收藏' : '收藏'}
-                    title={isFavorite ? '取消收藏' : '收藏'}
+                    aria-label={isFavorite ? t('取消收藏', 'Remove from favorites') : t('收藏', 'Add to favorites')}
+                    title={isFavorite ? t('取消收藏', 'Remove from favorites') : t('收藏', 'Add to favorites')}
                     onClick={() => useAppStore.getState().toggleLiveFavorite(currentChannel.url)}
                   >
                     <svg
@@ -402,8 +404,8 @@ function LiveContent() {
                   </button>
                   <button
                     className="rounded-md p-2 text-muted hover:text-accent hover:bg-hover transition-colors"
-                    aria-label="复制播放地址"
-                    title="复制播放地址"
+                    aria-label={t('复制播放地址', 'Copy stream URL')}
+                    title={t('复制播放地址', 'Copy stream URL')}
                     onClick={async () => {
                       const ok = await copyToClipboard(currentChannel.url);
                       if (ok) {
@@ -413,7 +415,7 @@ function LiveContent() {
                     }}
                   >
                     {copied ? (
-                      <span className="text-[10px] text-success">已复制</span>
+                      <span className="text-[10px] text-success">{t('已复制', 'Copied')}</span>
                     ) : (
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
@@ -432,7 +434,7 @@ function LiveContent() {
             {/* 节目单 */}
             {currentChannel && (
               <section className="bg-surface-raised border border-line rounded-lg p-3 mt-3">
-                <h2 className="text-sm font-semibold text-content mb-2.5">节目单</h2>
+                <h2 className="text-sm font-semibold text-content mb-2.5">{t('节目单', 'Programme guide')}</h2>
                 <LiveEpgPanel
                   channel={currentChannel}
                   onPlayCatchup={currentChannel.catchup ? playCatchup : undefined}
@@ -445,7 +447,7 @@ function LiveContent() {
           {/* 移动端抽屉遮罩 */}
           {listOpen && (
             <div
-              className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+              className="fixed inset-0 z-[45] bg-black/50 lg:hidden"
               aria-hidden="true"
               onClick={() => setListOpen(false)}
             />
@@ -455,17 +457,17 @@ function LiveContent() {
           <aside
             className={cn(
               'bg-surface-raised border border-line flex-col overflow-hidden',
-              'fixed inset-x-0 bottom-0 z-40 h-[75vh] rounded-t-2xl shadow-2xl',
+              'fixed inset-x-0 bottom-0 z-50 h-[75vh] rounded-t-2xl shadow-2xl',
               listOpen ? 'flex' : 'hidden',
-              'lg:sticky lg:top-20 lg:flex lg:h-[calc(100vh-6.5rem)] lg:rounded-xl lg:shadow-none'
+              'lg:sticky lg:top-20 lg:z-auto lg:flex lg:h-[calc(100vh-6.5rem)] lg:rounded-xl lg:shadow-none'
             )}
           >
             {/* 抽屉把手栏（仅移动端） */}
             <div className="flex items-center justify-between px-3 pt-3 pb-1 shrink-0 lg:hidden">
-              <span className="text-sm font-semibold text-content">频道列表</span>
+              <span className="text-sm font-semibold text-content">{t('频道列表', 'Channels')}</span>
               <button
                 className="rounded-md p-1.5 text-muted hover:text-content hover:bg-hover transition-colors"
-                aria-label="关闭频道列表"
+                aria-label={t('关闭频道列表', 'Close channel list')}
                 onClick={() => setListOpen(false)}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -489,16 +491,19 @@ function LiveContent() {
               )}
               {lockedCount > 0 && (
                 <p className="text-[10px] text-faint px-3 py-1.5 border-t border-line shrink-0">
-                  🔒 家长锁已隐藏 {lockedCount} 个频道
+                  🔒 {t(`家长锁已隐藏 ${lockedCount} 个频道`, `Parental lock is hiding ${lockedCount} channels`)}
                 </p>
               )}
               {(failedCount > 0 || sources.length === 0) && (
                 <p className="text-[10px] text-faint px-3 py-1.5 border-t border-line shrink-0">
                   {sources.length === 0
                     ? hasAnySource
-                      ? '所有直播源均已停用，请在设置中勾选启用'
-                      : '暂无直播源，请在设置 → 直播源中添加'
-                    : `${failedCount > 0 ? `${failedCount} 个订阅拉取失败 · ` : ''}共 ${sources.length} 个已启用源`}
+                      ? t('所有直播源均已停用，请在设置中勾选启用', 'All live sources are disabled — enable one in Settings')
+                      : t('暂无直播源，请在设置 → 直播源中添加', 'No live sources yet — add one in Settings → Live sources')
+                    : t(
+                        `${failedCount > 0 ? `${failedCount} 个订阅拉取失败 · ` : ''}共 ${sources.length} 个已启用源`,
+                        `${failedCount > 0 ? `${failedCount} failed to load · ` : ''}${sources.length} sources enabled`
+                      )}
                 </p>
               )}
             </div>
@@ -508,7 +513,7 @@ function LiveContent() {
         {/* 移动端呼出频道列表的悬浮按钮 */}
         {!listOpen && channels.length > 0 && (
           <button
-            className="fixed bottom-4 right-4 z-30 flex items-center gap-1.5 rounded-full bg-accent px-4 py-2.5 text-sm text-on-accent shadow-lg lg:hidden"
+            className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] md:bottom-4 right-4 z-30 flex items-center gap-1.5 rounded-full bg-accent px-4 py-2.5 text-sm text-on-accent shadow-lg lg:hidden"
             onClick={() => setListOpen(true)}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -519,7 +524,7 @@ function LiveContent() {
                 d="M4 6h16M4 12h16M4 18h16"
               />
             </svg>
-            频道
+            {t('频道', 'Channels')}
           </button>
         )}
       </main>
