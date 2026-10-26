@@ -22,7 +22,10 @@ Simply paste the link to one of the playlists into [any video player](https://gi
 
 ![VLC Network Panel](https://github.com/iptv-org/iptv/raw/master/.readme/preview.png)
 
-Or use **[IPTV Plus](app/)**, the web player included in this repository. It plays M3U playlists and Xtream Codes accounts, with an EPG guide, catch-up, multi-view, favorites, parental control and more. See [app/README.md](app/README.md).
+Or use one of the players included in this repository:
+
+- **[IPTV Plus](iptv-plus/)**: a self-hosted player built on [LibreTV](https://github.com/LibreSpark/LibreTV). It adds Xtream Codes, catch-up, a TV guide grid, multi-view, reminders and a parental lock, and uses a server-side proxy. See [iptv-plus/README.md](iptv-plus/README.md).
+- **[Static web player](app/)**: no server needed, so it can be hosted on GitHub Pages. See [app/README.md](app/README.md).
 
 ## Playlists
 

@@ -1,0 +1,37 @@
+name: iptv-plus
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - 'iptv-plus/**'
+      - '.github/workflows/iptv-plus.yml'
+  pull_request:
+    paths:
+      - 'iptv-plus/**'
+      - '.github/workflows/iptv-plus.yml'
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: iptv-plus
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: iptv-plus/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+        env:
+          PASSWORD: ci-build
