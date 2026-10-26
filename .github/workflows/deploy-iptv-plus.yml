@@ -50,18 +50,38 @@ jobs:
       IMAGE: ${{ needs.build.outputs.image }}:${{ github.sha }}
     steps:
       - uses: actions/checkout@v6
+      
       - name: Set up SSH
         env:
           SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
         run: |
+          set -eu
+
           if [ -z "$VPS_HOST" ] || [ -z "$VPS_USER" ] || [ -z "$SSH_KEY" ]; then
-            echo "::error::Add the VPS_HOST, VPS_USER and VPS_SSH_KEY repository secrets first (Settings → Secrets and variables → Actions)"
+            echo "::error::Missing VPS_HOST, VPS_USER, or VPS_SSH_KEY secret"
             exit 1
           fi
+
           install -m 700 -d ~/.ssh
-          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy
+          printf '%s\n' "$SSH_KEY" | tr -d '\r' > ~/.ssh/id_deploy
           chmod 600 ~/.ssh/id_deploy
-          ssh-keyscan -p "$VPS_PORT" -H "$VPS_HOST" >> ~/.ssh/known_hosts
+
+          # Validate that the secret contains a readable private key
+          ssh-keygen -y -f ~/.ssh/id_deploy > /dev/null
+
+          # Register the VPS host key
+          ssh-keyscan -p "$VPS_PORT" -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+          # Test authentication without allowing password prompts
+          ssh -vv \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
+            -o ConnectTimeout=10 \
+            -i ~/.ssh/id_deploy \
+            -p "$VPS_PORT" \
+            "$VPS_USER@$VPS_HOST" \
+            "echo SSH_AUTH_OK"
+
       - name: Upload compose file
         run: |
           ssh -i ~/.ssh/id_deploy -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" "mkdir -p $APP_DIR"
