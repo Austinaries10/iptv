@@ -1,0 +1,15 @@
+# IPTV Plus on a VPS (used by .github/workflows/deploy-iptv-plus.yml).
+# The image is built by GitHub Actions and pulled from GitHub Container Registry;
+# the VPS never builds anything. Secrets live in .env next to this file (never in git).
+services:
+  iptv-plus:
+    # Written into .env by the deploy workflow (ghcr.io/<owner>/iptv-plus:<commit>)
+    image: ${IPTV_PLUS_IMAGE:?IPTV_PLUS_IMAGE is written to .env by the deploy workflow}
+    container_name: iptv-plus
+    restart: unless-stopped
+    ports:
+      # Open http://<server-ip>/ by default; set HOST_PORT in .env to change it
+      - "${HOST_PORT:-80}:8080"
+    env_file: .env
+    environment:
+      - PASSWORD=${PASSWORD:?Set PASSWORD in /opt/iptv-plus/.env}

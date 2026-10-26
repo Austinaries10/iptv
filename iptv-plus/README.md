@@ -57,7 +57,33 @@ It runs on any host that runs Next.js (a VPS, Render, Railway, Fly.io, Zeabur an
 
 Because streams, playlists and EPG files go through the server-side proxy, there are no CORS or http/https mixed-content problems. That's why this version needs a server, unlike the static player in [`../app`](../app).
 
-## Development
+## Auto-deploy to your VPS
+
+`.github/workflows/deploy-iptv-plus.yml` builds the Docker image on GitHub, pushes it to GitHub Container Registry (`ghcr.io/<owner>/iptv-plus`), then connects to your VPS over SSH and restarts the app. The VPS never builds anything, so a small server is enough. It runs on every push to `master` or the development branch that changes `iptv-plus/`, and from **Actions → deploy-iptv-plus → Run workflow**.
+
+**One-time setup**
+
+1. **Install Docker on the VPS:** `curl -fsSL https://get.docker.com | sh`
+2. **Create the app folder and settings:**
+   ```bash
+   mkdir -p /opt/iptv-plus && cd /opt/iptv-plus
+   nano .env        # paste deploy/env.example, set PASSWORD (and PROXY_SECRET)
+   ```
+3. **Create a deploy key on the VPS** and allow it to log in:
+   ```bash
+   ssh-keygen -t ed25519 -N "" -f ~/.ssh/iptv_deploy
+   cat ~/.ssh/iptv_deploy.pub >> ~/.ssh/authorized_keys
+   cat ~/.ssh/iptv_deploy          # copy this private key for step 4
+   ```
+4. **Add repository secrets** in GitHub → Settings → Secrets and variables → Actions:
+   `VPS_HOST` (server IP), `VPS_USER` (e.g. `root` or `ubuntu`), `VPS_SSH_KEY` (the private key from step 3), and optionally `VPS_PORT` if SSH isn't on port 22.
+   If `VPS_USER` isn't root, give it Docker access (`sudo usermod -aG docker <user>`) and ownership of `/opt/iptv-plus`.
+5. **Open port 80** in your cloud provider's firewall or security group.
+6. **Enable GitHub Actions** for the repository (forks start with Actions disabled), then push or run the workflow manually.
+
+Then open `http://<server-ip>/`. To run on another port, set `HOST_PORT` in `.env`. For "Add to Home Screen" on phones you'll later want a domain with HTTPS (for example Caddy or Nginx in front of the app).
+
+
 
 ```bash
 npm install
