@@ -1,11 +1,8 @@
 name: deploy-iptv-plus
+# IPTV Plus moved to Austinaries10/iptv-plus, which now deploys automatically.
+# This copy only runs when started by hand, so the two never deploy at the same time.
 on:
   workflow_dispatch:
-  push:
-    branches: [master, ccr-91b56bb6-tyo2co]
-    paths:
-      - 'iptv-plus/**'
-      - '.github/workflows/deploy-iptv-plus.yml'
 permissions:
   contents: read
   packages: write
