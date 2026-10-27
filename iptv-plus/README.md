@@ -1,5 +1,7 @@
 # IPTV Plus
 
+> **Moved:** IPTV Plus now lives in its own repository, [Austinaries10/iptv-plus](https://github.com/Austinaries10/iptv-plus). Make new changes there.
+
 IPTV Plus is a self-hosted live TV / IPTV and video player built on [LibreTV](https://github.com/LibreSpark/LibreTV) (Next.js 15, TypeScript, Tailwind, ArtPlayer and hls.js). It keeps everything LibreTV does, including multi-source video search, M3U live TV with an EPG, a server-side stream proxy and a PWA, and adds the features below.
 
 ## Design
@@ -83,7 +85,7 @@ Because streams, playlists and EPG files go through the server-side proxy, there
 
 Then open `http://<server-ip>/`. To run on another port, set `HOST_PORT` in `.env`. For "Add to Home Screen" on phones you'll later want a domain with HTTPS (for example Caddy or Nginx in front of the app).
 
-
+## Development
 
 ```bash
 npm install
